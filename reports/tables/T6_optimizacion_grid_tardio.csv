@@ -1,0 +1,3 @@
+﻿Escenario,Algoritmo,N° Configuraciones,Mejor Configuración,MAE Previo (Default),MAE Optimizado,Mejora (%)
+Tardio,vecinos_cercanos,28,"{'modelo__n_neighbors': 9, 'modelo__p': 2, 'modelo__weights': 'distance'}",1.414,1.356,4.1
+Tardio,regresion_vectores_soporte,40,"{'modelo__C': 0.1, 'modelo__epsilon': 0.2, 'modelo__kernel': 'linear'}",0.993,0.801,19.26

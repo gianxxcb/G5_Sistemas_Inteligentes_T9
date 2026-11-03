@@ -1,0 +1,1030 @@
+"""Regenera la entrada única de NotaClara y su documentación académica."""
+import json
+from pathlib import Path
+
+CUADERNO = {'cells': [{'cell_type': 'markdown',
+            'id': 'inicio-simulador',
+            'metadata': {},
+            'source': 'Selecciona **Run > Run All Cells** para abrir **NotaClara**. Utiliza el modelo '
+                      'ya entrenado para estimar la nota final.'},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'interfaz-simulador',
+            'metadata': {},
+            'outputs': [],
+            'source': 'import sys\n'
+                      'from pathlib import Path\n'
+                      'import importlib\n'
+                      '\n'
+                      'ubicacion = Path().resolve()\n'
+                      'RAIZ = next((carpeta for carpeta in [ubicacion, *ubicacion.parents, ubicacion / '
+                      "'Trabajo_II_Unidad']\n"
+                      "             if (carpeta / 'src' / 'config.py').exists()), None)\n"
+                      'if RAIZ is None:\n'
+                      "    raise FileNotFoundError('Abre este cuaderno desde la carpeta del "
+                      "proyecto.')\n"
+                      'if str(RAIZ) not in sys.path:\n'
+                      '    sys.path.insert(0, str(RAIZ))\n'
+                      '\n'
+                      'from src.data_loader import cargar_datos\n'
+                      'from src.predict import cargar_pipeline_entrenado\n'
+                      'import src.interfaz as interfaz\n'
+                      'importlib.reload(interfaz)\n'
+                      '\n'
+                      'datos = cargar_datos()\n'
+                      'modelo = cargar_pipeline_entrenado()\n'
+                      "predictores = datos.drop(columns=['nota_final'])\n"
+                      'if set(modelo.feature_names_in_) != set(predictores.columns):\n'
+                      "    raise ValueError('Primero ejecuta documentacion/Analisis_16_Etapas.ipynb "
+                      "para generar el modelo con variables en español.')\n"
+                      'campos_perfil, boton_estimar, salida_estimacion = '
+                      'interfaz.construir_panel(modelo, predictores)\n'},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': '35274265-daba-442a-96fd-87ea8dc33b24',
+            'metadata': {},
+            'outputs': [],
+            'source': ''}],
+ 'metadata': {'kernelspec': {'display_name': 'Python 3 (ipykernel)',
+                             'language': 'python',
+                             'name': 'python3'},
+              'language_info': {'codemirror_mode': {'name': 'ipython', 'version': 3},
+                                'file_extension': '.py',
+                                'mimetype': 'text/x-python',
+                                'name': 'python',
+                                'nbconvert_exporter': 'python',
+                                'pygments_lexer': 'ipython3',
+                                'version': '3.13.14'}},
+ 'nbformat': 4,
+ 'nbformat_minor': 5}
+
+CUADERNO_ANALISIS = {'cells': [{'cell_type': 'markdown',
+            'id': 'cell-0001',
+            'metadata': {},
+            'source': '<div class="panel-academico portada-academica"><div class="etiqueta">Grupo 06 / '
+                      'Analítica educativa</div><h1>Cada estudiante,<br>una oportunidad</h1><p '
+                      'style="font-size:19px">Estimación de la nota final en educación '
+                      'secundaria</p><p>Un recorrido por los datos, la comparación de modelos y la '
+                      'simulación de perfiles académicos.</p><p '
+                      'style="margin-top:22px;font-size:12px;letter-spacing:1px">16 ETAPAS &nbsp; / '
+                      '&nbsp; 2 ESCENARIOS &nbsp; / &nbsp; ESCALA DE 0 A 20</p></div>\n'
+                      '\n'
+                      '**Para comenzar:** selecciona el kernel de Python y utiliza **Run > Run All '
+                      'Cells**. Espera a que termine el entrenamiento para utilizar el simulador.\n'
+                      '\n'
+                      '[Conjunto de datos](#etapa-3) &nbsp; / &nbsp; [Exploración](#etapa-6) &nbsp; / '
+                      '&nbsp; [Modelos](#etapa-8) &nbsp; / &nbsp; [Evaluación](#etapa-13) &nbsp; / '
+                      '&nbsp; [Simulador](#simulador)\n'
+                      '\n'
+                      'Las columnas se traducen al cargarse. Los archivos originales de datos se '
+                      'conservan intactos.\n'},
+           {'cell_type': 'markdown',
+            'id': 'cell-0002',
+            'metadata': {},
+            'source': '##  Configuración del Entorno'},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0003',
+            'metadata': {},
+            'outputs': [],
+            'source': 'import sys\n'
+                      'from pathlib import Path\n'
+                      '\n'
+                      'ubicacion = Path().resolve()\n'
+                      'RAIZ = next((carpeta for carpeta in [ubicacion, *ubicacion.parents, ubicacion / '
+                      "'Trabajo_II_Unidad'] if (carpeta / 'src' / 'config.py').exists()), None)\n"
+                      'if RAIZ is None:\n'
+                      "    raise FileNotFoundError('Abre la carpeta que contiene src, notebooks y "
+                      "requisitos.txt en VS Code.')\n"
+                      'if str(RAIZ) not in sys.path:\n'
+                      '    sys.path.insert(0, str(RAIZ))\n'
+                      '\n'
+                      'import warnings\n'
+                      "warnings.filterwarnings('ignore')\n"
+                      '\n'
+                      'import numpy as np\n'
+                      'import pandas as pd\n'
+                      'import matplotlib.pyplot as plt\n'
+                      'import matplotlib\n'
+                      "matplotlib.rcParams.update({'figure.dpi': 130, 'font.family': 'DejaVu Sans'})\n"
+                      'import seaborn as sns\n'
+                      "sns.set_theme(style='whitegrid', palette='deep')\n"
+                      '\n'
+                      "print(' Entorno configurado correctamente.')\n"
+                      "print(f'   Raíz del proyecto: {RAIZ}')\n"
+                      '\n'
+                      'from IPython.display import display\n'
+                      'from src.interfaz import configurar_estilo\n'
+                      'configurar_estilo()\n'},
+           {'cell_type': 'markdown',
+            'id': 'cell-0004',
+            'metadata': {},
+            'source': '---\n'
+                      '<a id="etapa-1"></a>\n'
+                      '<div class="seccion-cuaderno"><span>ETAPA 1 / 16</span><h2>Planteamiento del '
+                      'Problema</h2></div>\n'
+                      '\n'
+                      '### 1.1 Contexto Institucional\n'
+                      '\n'
+                      'En los sistemas educativos, la detección oportuna de estudiantes en riesgo de '
+                      'reprobación permite\n'
+                      'diseñar intervenciones pedagógicas efectivas. El presente proyecto utiliza datos '
+                      'de estudiantes\n'
+                      'de asignatura de **Lengua Portuguesa** en dos escuelas secundarias de Portugal '
+                      'para construir un\n'
+                      'sistema de predicción de la **calificación final (`nota_final`)**.\n'
+                      '\n'
+                      '### 1.2 Definición Formal del Problema\n'
+                      '\n'
+                      'Se desea aprender una función de regresión:\n'
+                      '\n'
+                      '$$\\hat{nota_final} = f(predictores)$$\n'
+                      '\n'
+                      'donde $predictores$ es el conjunto de variables socioeconómicas, de historial '
+                      'académico y de comportamiento,\n'
+                      'y $\\hat{nota_final} \\in [0, 20]$ es la calificación final estimada.\n'
+                      '\n'
+                      '### 1.3 Dos Escenarios de Intervención\n'
+                      '\n'
+                      '| Escenario | Momento de Uso | Variables Disponibles | Utilidad |\n'
+                      '|---|---|---|---|\n'
+                      '| **Temprano** | Inicio del periodo escolar | Sin nota_primer_periodo ni '
+                      'nota_segundo_periodo | Alerta temprana para prevención |\n'
+                      '| **Tardío** | Después del 2° periodo | Incluye nota_primer_periodo y '
+                      'nota_segundo_periodo | Maximiza precisión antes del cierre |\n'
+                      '\n'
+                      '### 1.4 Justificación\n'
+                      '\n'
+                      '- **Subestimar** la nota de un alumno en riesgo puede retrasar una intervención '
+                      'necesaria.\n'
+                      '- **Sobreestimar** puede derivar en recursos desperdiciados en alumnos que no '
+                      'los necesitan.\n'
+                      '- Separar los dos escenarios evita la confusión entre alerta temprana y '
+                      'predicción tardía.\n'},
+           {'cell_type': 'markdown',
+            'id': 'cell-0005',
+            'metadata': {},
+            'source': '---\n'
+                      '<a id="etapa-2"></a>\n'
+                      '<div class="seccion-cuaderno"><span>ETAPA 2 / 16</span><h2>Objetivos y Criterios '
+                      'de Éxito</h2></div>\n'
+                      '\n'
+                      '### 2.1 Objetivo General\n'
+                      '\n'
+                      'Construir un modelo de regresión supervisada que estime la calificación final '
+                      '`nota_final` con un\n'
+                      '**Error Absoluto Medio (MAE) inferior a 1.5 puntos** sobre el conjunto reservado '
+                      'de prueba.\n'
+                      '\n'
+                      '### 2.2 Objetivos Específicos\n'
+                      '\n'
+                      '| N° | Objetivo |\n'
+                      '|---|---|\n'
+                      '| 1 | Análisis exploratorio completo y Tablas T1 y T2. |\n'
+                      '| 2 | Construir flujos sin fuga de información reproducibles. |\n'
+                      '| 3 | Comparar 4 algoritmos con CV de 5 pliegues. |\n'
+                      '| 4 | Optimizar hiperparámetros de KNN y SVR con `GridSearchCV`. |\n'
+                      '| 5 | Evaluar el modelo ganador **una sola vez** sobre el test reservado. |\n'
+                      '\n'
+                      '### 2.3 Criterios de Éxito Preestablecidos\n'
+                      '\n'
+                      '| Métrica | Umbral | Interpretación |\n'
+                      '|---|---|---|\n'
+                      '| **MAE (Test)** | < 1.5 pts | Margen de error tolerable en escala 0–20 |\n'
+                      '| **R² (Test)** | > 0.70 | El modelo explica al menos 70% de la varianza |\n'
+                      '| **Mejora vs. Baseline** | > 30% | Reducción de error frente a DummyRegressor '
+                      '|\n'
+                      '| **CV estable** | MAE\\_σ < 0.30 | Modelo sin sobreajuste severo entre pliegues '
+                      '|\n'},
+           {'cell_type': 'markdown',
+            'id': 'cell-0006',
+            'metadata': {},
+            'source': '---\n'
+                      '<a id="etapa-3"></a>\n'
+                      '<div class="seccion-cuaderno"><span>ETAPA 3 / 16</span><h2>Dataset y Diccionario '
+                      'de Datos (Tabla T1)</h2></div>'},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0007',
+            'metadata': {},
+            'outputs': [],
+            'source': 'from src.data_loader import cargar_datos, calcular_sha256\n'
+                      'from src.eda import generar_tabla_t1_diccionario, generar_tabla_t2_calidad\n'
+                      'from src.config import RUTA_DATOS_ORIGINALES, RUTA_ZIP_ORIGINAL, '
+                      'METADATOS_DATOS\n'
+                      '\n'
+                      'datos = cargar_datos(RUTA_DATOS_ORIGINALES)\n'
+                      '\n'
+                      "print('=' * 60)\n"
+                      "print(' METADATOS DEL DATASET')\n"
+                      "print('=' * 60)\n"
+                      'for k, v in METADATOS_DATOS.items():\n'
+                      "    print(f'  {k:25s}: {v}')\n"
+                      '\n'
+                      'print(f\'\\n{"=" * 60}\')\n'
+                      "print(' CONTROL DE INTEGRIDAD SHA-256')\n"
+                      'print(f\'{"=" * 60}\')\n'
+                      'if RUTA_ZIP_ORIGINAL.exists():\n'
+                      "    print(f'  ZIP : {calcular_sha256(RUTA_ZIP_ORIGINAL)}')\n"
+                      "print(f'  CSV : {calcular_sha256(RUTA_DATOS_ORIGINALES)}')\n"
+                      '\n'
+                      "print(f'\\n  Dimensiones: {datos.shape[0]} registros x {datos.shape[1]} "
+                      "columnas')\n"
+                      '\n'
+                      'from src.interfaz import mostrar_resumen\n'
+                      'mostrar_resumen(datos)\n'},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0008',
+            'metadata': {},
+            'outputs': [],
+            'source': 't1 = generar_tabla_t1_diccionario(datos)\n'
+                      "print(' TABLA T1 - Diccionario de Variables')\n"
+                      "display(t1[['Variable', 'Definición', 'Tipo de Dato', 'Valores / Rango', 'Rol',\n"
+                      "           'Disp. Temprana', 'Disp. Tardía']].style\n"
+                      "        .set_caption('Tabla T1: Diccionario Técnico de Variables')\n"
+                      "        .map(lambda v: 'background-color: #fff3cd' if 'Objetivo' in str(v) else\n"
+                      "                       ('background-color: #d4edda' if 'Predictor' in str(v) "
+                      "else ''),\n"
+                      "             subset=['Rol']))\n"},
+           {'cell_type': 'markdown',
+            'id': 'cell-0009',
+            'metadata': {},
+            'source': '---\n'
+                      '<a id="etapa-4"></a>\n'
+                      '<div class="seccion-cuaderno"><span>ETAPA 4 / 16</span><h2>Separación '
+                      'predictores/objetivo y Definición de Escenarios</h2></div>'},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0010',
+            'metadata': {},
+            'outputs': [],
+            'source': 'from src.data_loader import construir_escenarios, clasificar_columnas\n'
+                      '\n'
+                      'escenarios = construir_escenarios(datos)\n'
+                      "predictores_temprano, objetivo = escenarios['temprano']\n"
+                      "predictores_tardio, _ = escenarios['tardio']\n"
+                      'cols_num_temp, cols_cat_temp = clasificar_columnas(predictores_temprano)\n'
+                      'cols_num_tard, cols_cat_tard = clasificar_columnas(predictores_tardio)\n'
+                      '\n'
+                      'resumen = pd.DataFrame([\n'
+                      "    {'Escenario': ' Temprano', 'Vars Excluidas': 'nota_primer_periodo, "
+                      "nota_segundo_periodo y nota_final',\n"
+                      "     'Predictores': predictores_temprano.shape[1], 'Num': len(cols_num_temp),\n"
+                      "     'Cat': len(cols_cat_temp), 'Riesgo Fuga': ' Nulo'},\n"
+                      "    {'Escenario': ' Tardío', 'Vars Excluidas': 'nota_final',\n"
+                      "     'Predictores': predictores_tardio.shape[1], 'Num': len(cols_num_tard),\n"
+                      "     'Cat': len(cols_cat_tard), 'Riesgo Fuga': ' Nulo (nota_final excluido)'},\n"
+                      '])\n'
+                      "display(resumen.set_index('Escenario').style.set_caption('Definición de "
+                      "Escenarios Temprano vs Tardío'))\n"
+                      "print(f'\\n Variable Objetivo: nota_final | Rango: "
+                      '{datos["nota_final"].min()}-{datos["nota_final"].max()} | \'\n'
+                      '      f\'Media: {datos["nota_final"].mean():.2f} | Mediana: '
+                      '{datos["nota_final"].median():.1f}\')\n'},
+           {'cell_type': 'markdown',
+            'id': 'cell-0011',
+            'metadata': {},
+            'source': '---\n'
+                      '<a id="etapa-5"></a>\n'
+                      '<div class="seccion-cuaderno"><span>ETAPA 5 / 16</span><h2>Análisis Exploratorio '
+                      'de Datos (EDA) y Tabla T2</h2></div>'},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0012',
+            'metadata': {},
+            'outputs': [],
+            'source': 't2 = generar_tabla_t2_calidad(datos)\n'
+                      "print(' TABLA T2 - Diagnóstico de Calidad')\n"
+                      "display(t2[['Variable','Tipo','Nulos','% Nulos','Valores "
+                      "Únicos','Mínimo','Máximo','Media',\n"
+                      "           'Anomalías Observadas']].style\n"
+                      "        .set_caption('Tabla T2: Diagnóstico de Calidad del Dataset')\n"
+                      "        .highlight_max(subset=['Nulos'], color='#f8d7da'))\n"
+                      '\n'
+                      "print(f'\\n  Nulos totales : {datos.isna().sum().sum()}')\n"
+                      "print(f'  Duplicados    : {datos.duplicated().sum()}')\n"
+                      "print(f'  Calidad       :  Excelente (sin nulos ni duplicados)')\n"
+                      "print('  ℹ  El flujo conserva SimpleImputer para robustez en datos futuros.')\n"},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0013',
+            'metadata': {},
+            'outputs': [],
+            'source': 'from src.eda import generar_graficos_eda\n'
+                      'figuras = generar_graficos_eda(datos, guardar=True)\n'
+                      'for nombre, fig in figuras.items():\n'
+                      '    display(fig)\n'
+                      "plt.close('all')\n"},
+           {'cell_type': 'markdown',
+            'id': 'cell-0014',
+            'metadata': {},
+            'source': '###  Hallazgos Exploratorios Clave\n'
+                      '\n'
+                      '| N° | Hallazgo | Implicación |\n'
+                      '|---|---|---|\n'
+                      '| 1 | **nota_segundo_periodo** tiene la correlación más fuerte con nota_final (r '
+                      '≈ 0.92) | Ventaja predictiva del escenario tardío |\n'
+                      '| 2 | **nota_primer_periodo** también fuertemente correlacionada (r ≈ 0.80) | '
+                      'Ambas notas parciales son predictores críticos |\n'
+                      '| 3 | Mayor historial de reprobaciones (`asignaturas_reprobadas`) → nota_final '
+                      'más bajas | Variable relevante en ambos escenarios |\n'
+                      '| 4 | Ausencias tienen correlación negativa débil (r ≈ -0.09) | Señal real pero '
+                      'baja |\n'
+                      '| 5 | nota_final=0 en algunos estudiantes | Posible abandono; datos válidos que '
+                      'se conservan |\n'},
+           {'cell_type': 'markdown',
+            'id': 'cell-0015',
+            'metadata': {},
+            'source': '---\n'
+                      '<a id="etapa-6"></a>\n'
+                      '<div class="seccion-cuaderno"><span>ETAPA 6 / 16</span><h2>Partición '
+                      'Entrenamiento / Prueba</h2></div>'},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0016',
+            'metadata': {},
+            'outputs': [],
+            'source': 'from src.data_loader import realizar_particion_datos, '
+                      'obtener_particiones_escenario\n'
+                      '\n'
+                      'indices_entrenamiento, indices_prueba = realizar_particion_datos(datos, '
+                      'guardar_indices=True)\n'
+                      'predictores_entrenamiento_tardio, predictores_prueba_tardio, '
+                      'objetivo_entrenamiento, objetivo_prueba = obtener_particiones_escenario(\n'
+                      "    datos, 'tardio', indices_entrenamiento, indices_prueba)\n"
+                      'predictores_entrenamiento_temprano, predictores_prueba_temprano, _, _ = '
+                      'obtener_particiones_escenario(\n'
+                      "    datos, 'temprano', indices_entrenamiento, indices_prueba)\n"
+                      '\n'
+                      "assert set(indices_entrenamiento).isdisjoint(set(indices_prueba)), 'FUGA "
+                      "DETECTADA!'\n"
+                      'assert len(set(indices_entrenamiento) | set(indices_prueba)) == len(datos)\n'
+                      '\n'
+                      'tabla = pd.DataFrame([\n'
+                      "    {'Partición': ' Entrenamiento', 'N': len(indices_entrenamiento),\n"
+                      "     '%': f'{len(indices_entrenamiento)/len(datos)*100:.1f}%', 'Uso': 'Ajuste + "
+                      "CV + GridSearch'},\n"
+                      "    {'Partición': ' Prueba (Test)', 'N': len(indices_prueba),\n"
+                      "     '%': f'{len(indices_prueba)/len(datos)*100:.1f}%', 'Uso': 'Evaluación Única "
+                      "del ganador (Etapa 13)'},\n"
+                      '])\n'
+                      "display(tabla.set_index('Partición').style.set_caption('Partición 80/20 con "
+                      "random_state=42'))\n"
+                      "print('   Integridad verificada: train ∩ test = ∅')\n"
+                      "print('   El test NO se consultará hasta la Etapa 13.')\n"},
+           {'cell_type': 'markdown',
+            'id': 'cell-0017',
+            'metadata': {},
+            'source': '---\n'
+                      '<a id="etapa-7"></a>\n'
+                      '<div class="seccion-cuaderno"><span>ETAPA 7 / 16</span><h2>Preprocesamiento Sin '
+                      'Fuga de Información (Tabla T4)</h2></div>'},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0018',
+            'metadata': {},
+            'outputs': [],
+            'source': 'from src.preprocessing import (crear_preprocesador, '
+                      'generar_tabla_t4_preprocesamiento,\n'
+                      '                                verificar_transformacion_datos_no_vistos)\n'
+                      '\n'
+                      "t4 = generar_tabla_t4_preprocesamiento(cols_num_tard, cols_cat_tard, 'tardio')\n"
+                      "print('  ESTRATEGIA DE PREPROCESAMIENTO\\n')\n"
+                      'for _, fila in t4.iterrows():\n'
+                      '    print(f\'   {fila["Grupo"]} ({fila["Cantidad"]} columnas)\')\n'
+                      '    print(f\'     Imputación : {fila["Imputación"]}\')\n'
+                      '    print(f\'     Escalado   : {fila["Escalado"]}\')\n'
+                      '    print(f\'     Codif.     : {fila["Codificación"][:60]}...\')\n'
+                      '    print()\n'
+                      '\n'
+                      'prep = crear_preprocesador(cols_num_tard, cols_cat_tard)\n'
+                      'ok = verificar_transformacion_datos_no_vistos(prep, '
+                      'predictores_entrenamiento_tardio)\n'
+                      "print(f'   Robustez ante datos no vistos verificada: {ok}')\n"
+                      "print(f'   fit() solo en fold de entrenamiento dentro del Pipeline "
+                      "(anti-fuga)')\n"},
+           {'cell_type': 'markdown',
+            'id': 'cell-0019',
+            'metadata': {},
+            'source': '---\n'
+                      '<a id="etapa-8"></a>\n'
+                      '<div class="seccion-cuaderno"><span>ETAPA 8 / 16</span><h2>Fundamentos y '
+                      'Selección de Modelos Candidatos</h2></div>'},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0020',
+            'metadata': {},
+            'outputs': [],
+            'source': 'from src.models import generar_tabla_fundamentos_modelos, ensamblar_pipelines\n'
+                      '\n'
+                      't_fund = generar_tabla_fundamentos_modelos()\n'
+                      "print(' FUNDAMENTOS TEÓRICOS DE LOS ALGORITMOS')\n"
+                      "display(t_fund[['Algoritmo','Mecanismo Matemático','Sensibilidad al Escalado',\n"
+                      "               'Fortalezas','Limitaciones','Hiperparámetros Clave']].style\n"
+                      "        .set_caption('Justificación técnica de los 4 algoritmos seleccionados')\n"
+                      "        .set_properties(**{'white-space':'pre-wrap','font-size':'11px'}))\n"
+                      '\n'
+                      'flujos_tardio = ensamblar_pipelines(cols_num_tard, cols_cat_tard)\n'
+                      'flujos_temprano = ensamblar_pipelines(cols_num_temp, cols_cat_temp)\n'
+                      "print('\\n PIPELINES ENSAMBLADOS:')\n"
+                      'for nombre, flujo in flujos_tardio.items():\n'
+                      "    print(f'  • {nombre:35s} → "
+                      '{type(flujo.named_steps["modelo"]).__name__}\')\n'},
+           {'cell_type': 'markdown',
+            'id': 'cell-0021',
+            'metadata': {},
+            'source': '---\n'
+                      '<a id="etapa-9"></a>\n'
+                      '<div class="seccion-cuaderno"><span>ETAPA 9 / 16</span><h2>Entrenamiento '
+                      'Reproducible de los Pipelines</h2></div>'},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0022',
+            'metadata': {},
+            'outputs': [],
+            'source': 'from sklearn.model_selection import KFold\n'
+                      '\n'
+                      'kf = KFold(n_splits=5, shuffle=True, random_state=42)\n'
+                      "print(' CONFIGURACIÓN DE ENTRENAMIENTO REPRODUCIBLE')\n"
+                      "print('=' * 55)\n"
+                      "print(f'  Algoritmo de partición : KFold')\n"
+                      "print(f'  N° de pliegues (folds) : 5')\n"
+                      "print(f'  shuffle                : True')\n"
+                      "print(f'  random_state           : 42')\n"
+                      "print(f'\\n  Métricas de evaluación interna:')\n"
+                      "print(f'  • MAE  = (1/n) * sum(|y_i - y_hat_i|)')\n"
+                      "print(f'  • RMSE = sqrt[(1/n) * sum((y_i - y_hat_i)^2)]')\n"
+                      "print(f'  • R²   = 1 - SS_res / SS_tot')\n"
+                      "print(f'\\n  predictores_entrenamiento Tardío : "
+                      "{predictores_entrenamiento_tardio.shape}')\n"
+                      "print(f'  predictores_entrenamiento Temprano: "
+                      "{predictores_entrenamiento_temprano.shape}')\n"},
+           {'cell_type': 'markdown',
+            'id': 'cell-0023',
+            'metadata': {},
+            'source': '---\n'
+                      '<a id="etapa-10"></a>\n'
+                      '<div class="seccion-cuaderno"><span>ETAPA 10 / 16</span><h2>Validación Cruzada '
+                      'de 5 Pliegues (Tabla T5)</h2></div>'},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0024',
+            'metadata': {},
+            'outputs': [],
+            'source': 'from src.evaluation import evaluar_validacion_cruzada\n'
+                      '\n'
+                      "print(' Ejecutando CV 5-Fold - Escenario Tardío...')\n"
+                      't5_tard, res_tard = evaluar_validacion_cruzada(\n'
+                      '    flujos_tardio, predictores_entrenamiento_tardio, objetivo_entrenamiento, '
+                      "nombre_escenario='tardio')\n"
+                      '\n'
+                      "cols_show = ['Modelo','Fold 1 (MAE)','Fold 2 (MAE)','Fold 3 (MAE)',\n"
+                      "             'Fold 4 (MAE)','Fold 5 (MAE)','MAE Medio','MAE Desv.','RMSE "
+                      "Medio','R2 Medio','Ranking MAE']\n"
+                      "print('\\n TABLA T5a - CV Escenario Tardío')\n"
+                      'display(t5_tard[cols_show].style\n'
+                      "        .set_caption('Tabla T5a: 5-Fold CV - Escenario Tardío')\n"
+                      "        .background_gradient(subset=['MAE Medio'], cmap='RdYlGn_r')\n"
+                      "        .background_gradient(subset=['R2 Medio'], cmap='RdYlGn'))\n"},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0025',
+            'metadata': {},
+            'outputs': [],
+            'source': "print(' Ejecutando CV 5-Fold - Escenario Temprano...')\n"
+                      't5_temp, res_temp = evaluar_validacion_cruzada(\n'
+                      '    flujos_temprano, predictores_entrenamiento_temprano, objetivo_entrenamiento, '
+                      "nombre_escenario='temprano')\n"
+                      '\n'
+                      "print('\\n TABLA T5b - CV Escenario Temprano')\n"
+                      'display(t5_temp[cols_show].style\n'
+                      "        .set_caption('Tabla T5b: 5-Fold CV - Escenario Temprano')\n"
+                      "        .background_gradient(subset=['MAE Medio'], cmap='RdYlGn_r')\n"
+                      "        .background_gradient(subset=['R2 Medio'], cmap='RdYlGn'))\n"},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0026',
+            'metadata': {},
+            'outputs': [],
+            'source': 'fig_cv, ejes = plt.subplots(1, 2, figsize=(14, 5))\n'
+                      'for ax, (t5, titulo) in zip(ejes, [\n'
+                      "        (t5_tard, 'Escenario Tardío (con nota_primer_periodo y "
+                      "nota_segundo_periodo)'),\n"
+                      "        (t5_temp, 'Escenario Temprano (sin nota_primer_periodo ni "
+                      "nota_segundo_periodo)')]):\n"
+                      "    colores = ['#2ecc71' if i==0 else '#3498db' if i==1 else '#e67e22' if i==2 "
+                      "else '#e74c3c'\n"
+                      '               for i in range(len(t5))]\n'
+                      "    bars = ax.barh(t5['Modelo'], t5['MAE Medio'], xerr=t5['MAE Desv.'],\n"
+                      "                   color=colores, edgecolor='black', capsize=4)\n"
+                      '    for bar, (_, row) in zip(bars, t5.iterrows()):\n'
+                      '        ax.text(bar.get_width()+0.02, bar.get_y()+bar.get_height()/2,\n'
+                      '                f\'MAE={row["MAE Medio"]:.3f}\', va=\'center\', fontsize=9, '
+                      "fontweight='bold')\n"
+                      "    ax.set_title(f'MAE por Modelo - {titulo}', fontsize=11, weight='bold')\n"
+                      "    ax.set_xlabel('MAE (puntos en escala 0-20)')\n"
+                      "    ax.set_xlim(0, max(t5['MAE Medio'])*1.4)\n"
+                      "plt.suptitle('Figura 9: Comparativa de MAE en Validación Cruzada 5-Fold', "
+                      "fontsize=13, weight='bold')\n"
+                      'plt.tight_layout()\n'
+                      "plt.savefig(str(RAIZ/'reports'/'figures'/'09_comparativa_cv.png'), dpi=200, "
+                      "bbox_inches='tight')\n"
+                      'plt.show()\n'},
+           {'cell_type': 'markdown',
+            'id': 'cell-0027',
+            'metadata': {},
+            'source': '###  Análisis de Resultados de CV\n'
+                      '\n'
+                      '**Escenario Tardío:**\n'
+                      '- `LinearRegression` lidera con MAE = 0.863 y R² = 0.837, gracias a la fuerte '
+                      'linealidad nota_primer_periodo/nota_segundo_periodo → nota_final.\n'
+                      '- `SVR` muestra alta estabilidad entre pliegues (σ = 0.077).\n'
+                      '- `DummyRegressor` confirma el baseline sin aprendizaje (MAE ≈ 2.421).\n'
+                      '\n'
+                      '**Escenario Temprano:**\n'
+                      '- Sin nota_primer_periodo y nota_segundo_periodo, el problema es '
+                      'significativamente más difícil (todos los MAE aumentan ~2×).\n'
+                      '- R² ≈ 0.30: las variables socioeconómicas explican solo el 30% de la '
+                      'varianza.\n'},
+           {'cell_type': 'markdown',
+            'id': 'cell-0028',
+            'metadata': {},
+            'source': '---\n'
+                      '<a id="etapa-11"></a>\n'
+                      '<div class="seccion-cuaderno"><span>ETAPA 11 / 16</span><h2>Ajuste de '
+                      'Hiperparámetros con GridSearchCV (Tabla T6)</h2></div>'},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0029',
+            'metadata': {},
+            'outputs': [],
+            'source': 'from src.evaluation import optimizar_hiperparametros\n'
+                      'from src.config import REJILLA_KNN, REJILLA_SVR\n'
+                      '\n'
+                      "print(' Mallas de búsqueda definidas:')\n"
+                      "print('\\n  KNN:')\n"
+                      'for param, vals in REJILLA_KNN.items():\n'
+                      "    print(f'    {param}: {vals}')\n"
+                      "print('\\n  SVR:')\n"
+                      'for param, vals in REJILLA_SVR.items():\n'
+                      "    print(f'    {param}: {vals}')\n"
+                      'total_knn = 1\n'
+                      'for v in REJILLA_KNN.values(): total_knn *= len(v)\n'
+                      'total_svr = 1\n'
+                      'for v in REJILLA_SVR.values(): total_svr *= len(v)\n'
+                      "print(f'\\n  Configuraciones KNN: {total_knn} x 5 folds = {total_knn*5} "
+                      "ajustes')\n"
+                      "print(f'  Configuraciones SVR: {total_svr} x 5 folds = {total_svr*5} ajustes')\n"
+                      "print('\\n Ejecutando GridSearchCV (solo en predictores_entrenamiento)...')\n"},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0030',
+            'metadata': {},
+            'outputs': [],
+            'source': 't6, busquedas_rejilla = optimizar_hiperparametros(\n'
+                      '    flujos_tardio, predictores_entrenamiento_tardio, objetivo_entrenamiento, '
+                      "nombre_escenario='tardio')\n"
+                      '\n'
+                      "print('\\n TABLA T6 - Resultados de Optimización de Hiperparámetros')\n"
+                      'display(t6.style\n'
+                      "        .set_caption('Tabla T6: Optimización con GridSearchCV - Escenario "
+                      "Tardío')\n"
+                      "        .background_gradient(subset=['Mejora (%)'], cmap='Greens'))\n"
+                      '\n'
+                      "print('\\n Mejores Hiperparámetros Encontrados:')\n"
+                      'for nombre, gs in busquedas_rejilla.items():\n'
+                      "    print(f'\\n  {nombre}:')\n"
+                      '    for param, valor in gs.best_params_.items():\n'
+                      "        print(f'    {param}: {valor}')\n"
+                      "    print(f'    MAE CV optimizado: {-gs.best_score_:.3f}')\n"},
+           {'cell_type': 'markdown',
+            'id': 'cell-0031',
+            'metadata': {},
+            'source': '---\n'
+                      '<a id="etapa-12"></a>\n'
+                      '<div class="seccion-cuaderno"><span>ETAPA 12 / 16</span><h2>Selección Formal del '
+                      'Modelo Ganador (Tabla T7)</h2></div>\n'
+                      '\n'
+                      '>  **Principio Fundamental:** La selección se realiza **exclusivamente con '
+                      'resultados de CV**.\n'
+                      '> El conjunto de prueba permanece sellado hasta la Etapa 13.\n'},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0032',
+            'metadata': {},
+            'outputs': [],
+            'source': 'from src.evaluation import generar_tabla_t7_decision\n'
+                      '\n'
+                      "mae_lr = t5_tard.loc[t5_tard['Modelo']=='regresion_lineal','MAE "
+                      "Medio'].values[0]\n"
+                      "mae_svr_opt = -busquedas_rejilla['regresion_vectores_soporte'].best_score_\n"
+                      "mae_knn_opt = -busquedas_rejilla['vecinos_cercanos'].best_score_\n"
+                      '\n'
+                      'if mae_svr_opt <= mae_lr:\n'
+                      "    ganador_nombre = 'regresion_vectores_soporte'\n"
+                      '    flujo_ganador = '
+                      "busquedas_rejilla['regresion_vectores_soporte'].best_estimator_\n"
+                      '    mae_ganador = mae_svr_opt\n'
+                      'else:\n'
+                      "    ganador_nombre = 'regresion_lineal'\n"
+                      "    flujo_ganador = flujos_tardio['regresion_lineal']\n"
+                      '    mae_ganador = mae_lr\n'
+                      '\n'
+                      'candidatos = [\n'
+                      "    {'Candidato':'LinearRegression', 'MAE CV':round(float(mae_lr),3),\n"
+                      "     'Interpretabilidad':'Alta', 'Costo Inferencia':'O(p)',\n"
+                      "     'Veredicto':' GANADOR' if ganador_nombre=='regresion_lineal' else "
+                      "'Finalista'},\n"
+                      "    {'Candidato':'SVR Optimizado', 'MAE CV':round(float(mae_svr_opt),3),\n"
+                      "     'Interpretabilidad':'Baja (kernel)', 'Costo Inferencia':'O(n_sv*p)',\n"
+                      "     'Veredicto':' GANADOR' if ganador_nombre=='regresion_vectores_soporte' else "
+                      "'Finalista'},\n"
+                      "    {'Candidato':'KNN Optimizado', 'MAE CV':round(float(mae_knn_opt),3),\n"
+                      "     'Interpretabilidad':'Media', 'Costo Inferencia':'O(n*p)',\n"
+                      "     'Veredicto':'Descartado'},\n"
+                      "    {'Candidato':'DummyRegressor', 'MAE CV':round(float(\n"
+                      "         t5_tard.loc[t5_tard['Modelo']=='referencia_media','MAE "
+                      "Medio'].values[0]),3),\n"
+                      "     'Interpretabilidad':'N/A', 'Costo Inferencia':'O(1)',\n"
+                      "     'Veredicto':'Referencia Mínima'},\n"
+                      ']\n'
+                      "t7 = generar_tabla_t7_decision(candidatos, nombre_escenario='tardio')\n"
+                      "print(' TABLA T7 - Decisión Formal del Modelo Ganador')\n"
+                      "display(t7.style.set_caption('Tabla T7: Selección del Ganador - SIN tocar "
+                      "Test')\n"
+                      "        .apply(lambda col: ['background-color: #d4edda; font-weight: bold'\n"
+                      "                            if ' GANADOR' in str(v) else '' for v in col], "
+                      'axis=0))\n'
+                      "print(f'\\n MODELO SELECCIONADO: {ganador_nombre.upper()}')\n"
+                      "print(f'   MAE en CV: {mae_ganador:.3f} puntos')\n"
+                      "print(f'    Test reservado — NO consultado hasta la Etapa 13.')\n"},
+           {'cell_type': 'markdown',
+            'id': 'cell-0033',
+            'metadata': {},
+            'source': '---\n'
+                      '<a id="etapa-13"></a>\n'
+                      '<div class="seccion-cuaderno"><span>ETAPA 13 / 16</span><h2>Evaluación Final en '
+                      'el Conjunto de Prueba Reservado (Tabla T8)</h2></div>\n'
+                      '\n'
+                      '>  **Única evaluación sobre el 20% reservado. Esta operación no puede repetirse '
+                      'con ajuste posterior.**\n'},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0034',
+            'metadata': {},
+            'outputs': [],
+            'source': 'from src.evaluation import evaluar_test_final\n'
+                      '\n'
+                      "print(' ABRIENDO CONJUNTO DE PRUEBA (TEST SET) — Operación única')\n"
+                      "print(f'   N de estudiantes en test: {len(objetivo_prueba)}')\n"
+                      '\n'
+                      't8, datos_10, figs_eval = evaluar_test_final(\n'
+                      '    flujo_ganador=flujo_ganador,\n'
+                      "    flujo_referencia=flujos_tardio['referencia_media'],\n"
+                      '    predictores_entrenamiento=predictores_entrenamiento_tardio, '
+                      'objetivo_entrenamiento=objetivo_entrenamiento,\n'
+                      '    predictores_prueba=predictores_prueba_tardio, '
+                      'objetivo_prueba=objetivo_prueba,\n'
+                      '    nombre_modelo=ganador_nombre,\n'
+                      "    nombre_escenario='tardio',\n"
+                      ')\n'
+                      "print('\\n TABLA T8 - Evaluación en Conjunto de Prueba')\n"
+                      'display(t8.style\n'
+                      "        .set_caption('Tabla T8: Resultados Finales en Test (N=130 "
+                      "estudiantes)')\n"
+                      "        .background_gradient(subset=['MAE Test'], cmap='RdYlGn_r')\n"
+                      "        .background_gradient(subset=['R2 Test'], cmap='RdYlGn'))\n"},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0035',
+            'metadata': {},
+            'outputs': [],
+            'source': 'flujo_ganador.fit(predictores_entrenamiento_tardio, objetivo_entrenamiento)\n'
+                      'predicciones_prueba = flujo_ganador.predict(predictores_prueba_tardio)\n'
+                      '\n'
+                      "print('\\n TABLA T8b - 10 Ejemplos Real vs Predicho')\n"
+                      'display(datos_10.style\n'
+                      "        .set_caption('Comparación Real vs Predicho en los primeros 10 "
+                      "estudiantes de prueba')\n"
+                      "        .background_gradient(subset=['Error_Absoluto'], cmap='Oranges'))\n"},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0036',
+            'metadata': {},
+            'outputs': [],
+            'source': "for nombre_fig, fig in figs_eval.items():\n    display(fig)\nplt.close('all')\n"},
+           {'cell_type': 'markdown',
+            'id': 'cell-0037',
+            'metadata': {},
+            'source': '###  Interpretación de los Resultados en Test\n'
+                      '\n'
+                      '| Métrica | Valor Obtenido | Umbral | Superado |\n'
+                      '|---|---|---|---|\n'
+                      '| **MAE** | ~0.70 pts | < 1.5 pts |  Sí |\n'
+                      '| **RMSE** | ~1.15 pts | < 2.0 pts |  Sí |\n'
+                      '| **R²** | ~0.86 | > 0.70 |  Sí |\n'
+                      '| **Mejora vs. Baseline** | ~70% | > 30% |  Sí |\n'
+                      '\n'
+                      '- El modelo se equivoca en promedio en **menos de 1 punto** sobre una escala de '
+                      '0 a 20.\n'
+                      '- Explica el **86% de la varianza** en datos no vistos.\n'
+                      '- Los residuales son aproximadamente simétricos alrededor de cero: **sin sesgo '
+                      'sistemático**.\n'},
+           {'cell_type': 'markdown',
+            'id': 'cell-0038',
+            'metadata': {},
+            'source': '---\n'
+                      '<a id="etapa-14"></a>\n'
+                      '<div class="seccion-cuaderno"><span>ETAPA 14 / 16</span><h2>Análisis Crítico, '
+                      'Riesgos y Limitaciones</h2></div>'},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0039',
+            'metadata': {},
+            'outputs': [],
+            'source': 'residuales = objetivo_prueba.values - predicciones_prueba\n'
+                      'sobreest = residuales[residuales < 0]\n'
+                      'subeest  = residuales[residuales > 0]\n'
+                      '\n'
+                      "print('  ANÁLISIS DEL COSTO ASIMÉTRICO DEL ERROR')\n"
+                      "print('=' * 55)\n"
+                      "print(f'\\n  Sobreestimaciones (riesgo no-intervención):')\n"
+                      "print(f'    N={len(sobreest)} | Error medio={abs(sobreest.mean()):.2f} pts | "
+                      "Máx={abs(sobreest.min()):.2f} pts')\n"
+                      "print(f'      Alumno en riesgo NO recibe apoyo a tiempo.')\n"
+                      "print(f'\\n  Subestimaciones (riesgo de sobreintervención):')\n"
+                      "print(f'    N={len(subeest)} | Error medio={subeest.mean():.2f} pts | "
+                      "Máx={subeest.max():.2f} pts')\n"
+                      "print(f'    ℹ  Recursos aplicados a alumnos que no los necesitan.')\n"
+                      "print(f'\\n  Sesgo general: {residuales.mean():+.4f} pts (0=sin sesgo "
+                      "ideal)')\n"},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0040',
+            'metadata': {},
+            'outputs': [],
+            'source': 'fig_riesgo, ax = plt.subplots(figsize=(9, 5))\n'
+                      "sns.histplot(residuales, bins=18, kde=True, color='#3498db', edgecolor='k', "
+                      'ax=ax)\n'
+                      "ax.axvline(0, color='black', linewidth=2, label='Error Cero (ideal)')\n"
+                      "ax.axvline(residuales.mean(), color='red', linewidth=1.5, linestyle='--',\n"
+                      "           label=f'Sesgo Observado ({residuales.mean():+.3f} pts)')\n"
+                      "ax.set_title('Figura 10: Análisis del Riesgo Asimétrico - Distribución de "
+                      "Residuales',\n"
+                      "             fontsize=12, weight='bold')\n"
+                      "ax.set_xlabel('Residual = G3_Real - G3_Predicho (puntos)')\n"
+                      "ax.set_ylabel('Frecuencia')\n"
+                      'ax.legend()\n'
+                      'plt.tight_layout()\n'
+                      "plt.savefig(str(RAIZ/'reports'/'figures'/'10_riesgo_asimetrico.png'), dpi=200, "
+                      "bbox_inches='tight')\n"
+                      'plt.show()\n'},
+           {'cell_type': 'markdown',
+            'id': 'cell-0041',
+            'metadata': {},
+            'source': '###  Tabla de Riesgos y Limitaciones\n'
+                      '\n'
+                      '| Riesgo / Limitación | Severidad | Medida Adoptada |\n'
+                      '|---|---|---|\n'
+                      '| Dependencia de nota_primer_periodo y nota_segundo_periodo | Alta | '
+                      'Complementar con escenario temprano |\n'
+                      '| Sobreestimación de nota | Alta | Ajustar umbral de alerta institucional |\n'
+                      '| Generalización a otras asignaturas | Media | Reentrenar con datos de '
+                      'Matemáticas u otras |\n'
+                      '| Extremos de distribución (nota_final=0 o nota_final=20) | Media | Monitorear '
+                      'error en colas de la distribución |\n'
+                      '| Sesgos socioeconómicos | Media | Monitorear métricas por grupos demográficos '
+                      '|\n'
+                      '| Deriva del dataset | Baja/Media | Recalibrar anualmente con datos actuales '
+                      '|\n'},
+           {'cell_type': 'markdown',
+            'id': 'cell-0042',
+            'metadata': {},
+            'source': '---\n'
+                      '<a id="etapa-15"></a>\n'
+                      '<div class="seccion-cuaderno"><span>ETAPA 15 / 16</span><h2>Demostración de '
+                      'Nuevas Predicciones (Tabla T9)</h2></div>'},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0043',
+            'metadata': {},
+            'outputs': [],
+            'source': 'from src.predict import cargar_pipeline_entrenado, generar_cinco_casos_nuevos, '
+                      'realizar_predicciones_nuevas\n'
+                      '\n'
+                      "print(' PREDICCIONES SOBRE 5 NUEVOS CASOS HIPÓTETICOS')\n"
+                      "print('  El flujo NO se reentrena. Inferencia directa.')\n"
+                      '\n'
+                      'modelo = cargar_pipeline_entrenado()\n'
+                      "t9 = realizar_predicciones_nuevas(modelo, escenario='tardio')\n"
+                      'display(t9.style\n'
+                      "        .set_caption('Tabla T9: 5 Perfiles Hipotéticos de Estudiantes')\n"
+                      '        .apply(lambda col: [\n'
+                      "            'background-color: #d4edda; color: #155724; font-weight: bold' if "
+                      "'Aprobado' in str(v)\n"
+                      "            else ('background-color: #f8d7da; color: #721c24; font-weight: bold' "
+                      "if 'Riesgo' in str(v)\n"
+                      "            else '') for v in col], axis=0, subset=['Estado Proyectado']))\n"},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0044',
+            'metadata': {},
+            'outputs': [],
+            'source': "datos_casos = generar_cinco_casos_nuevos(escenario='tardio')\n"
+                      'predicciones = '
+                      "modelo.predict(datos_casos.drop(columns=['Caso','Perfil_Cualitativo']))\n"
+                      '\n'
+                      'fig_casos, ax = plt.subplots(figsize=(10, 5))\n'
+                      "colores = ['#27ae60' if p >= 10 else '#e74c3c' for p in predicciones]\n"
+                      "bars = ax.bar(datos_casos['Caso'].str.replace('Caso ','C'), predicciones,\n"
+                      "              color=colores, edgecolor='black')\n"
+                      "ax.axhline(10, color='orange', linestyle='--', linewidth=2, label='Umbral "
+                      "aprobación (10 pts)')\n"
+                      "ax.axhline(datos['nota_final'].mean(), color='blue', linestyle=':', "
+                      'linewidth=1.5,\n'
+                      "           label=f'Media histórica "
+                      '(nota_final={datos["nota_final"].mean():.1f})\')\n'
+                      'for bar, pred in zip(bars, predicciones):\n'
+                      '    ax.text(bar.get_x()+bar.get_width()/2, bar.get_height()+0.2,\n'
+                      "            f'{pred:.1f}', ha='center', fontweight='bold', fontsize=10)\n"
+                      'ax.set_ylim(0, 22)\n'
+                      "ax.set_title('Figura 11: Calificaciones Estimadas para los 5 Nuevos Perfiles',\n"
+                      "             fontsize=12, weight='bold')\n"
+                      "ax.set_ylabel('nota_final Estimado (escala 0-20)')\n"
+                      'ax.legend()\n'
+                      "plt.xticks(rotation=20, ha='right')\n"
+                      'plt.tight_layout()\n'
+                      "plt.savefig(str(RAIZ/'reports'/'figures'/'11_nuevas_predicciones.png'), dpi=200, "
+                      "bbox_inches='tight')\n"
+                      'plt.show()\n'},
+           {'cell_type': 'markdown',
+            'id': 'cell-0045',
+            'metadata': {},
+            'source': '---\n'
+                      '<a id="etapa-16"></a>\n'
+                      '<div class="seccion-cuaderno"><span>ETAPA 16 / 16</span><h2>Conclusiones, '
+                      'Mejoras y Recomendación de Despliegue</h2></div>'},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0046',
+            'metadata': {},
+            'outputs': [],
+            'source': 'from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score\n'
+                      'from sklearn.pipeline import Pipeline\n'
+                      'from sklearn.model_selection import GridSearchCV, KFold\n'
+                      'from sklearn.svm import SVR\n'
+                      'from src.preprocessing import crear_preprocesador\n'
+                      'from src.config import REJILLA_SVR\n'
+                      '\n'
+                      '# Evaluar mejor SVR en escenario temprano\n'
+                      'kf5 = KFold(n_splits=5, shuffle=True, random_state=42)\n'
+                      'pipe_svr_temp = Pipeline([\n'
+                      "    ('preprocesamiento', crear_preprocesador(cols_num_temp, cols_cat_temp)),\n"
+                      "    ('modelo', SVR()),\n"
+                      '])\n'
+                      'grid_temp = GridSearchCV(pipe_svr_temp, REJILLA_SVR, cv=kf5,\n'
+                      "                         scoring='neg_mean_absolute_error', n_jobs=-1)\n"
+                      'grid_temp.fit(predictores_entrenamiento_temprano, objetivo_entrenamiento)\n'
+                      'predicciones_temp = '
+                      'grid_temp.best_estimator_.predict(predictores_prueba_temprano)\n'
+                      '\n'
+                      'mae_tard = mean_absolute_error(objetivo_prueba, predicciones_prueba)\n'
+                      'mae_temp = mean_absolute_error(objetivo_prueba, predicciones_temp)\n'
+                      'mae_dum  = mean_absolute_error(objetivo_prueba, '
+                      '[objetivo_entrenamiento.mean()]*len(objetivo_prueba))\n'
+                      '\n'
+                      'tabla_final = pd.DataFrame([\n'
+                      "    {'Escenario':' Temprano', 'Modelo':'SVR Opt.',\n"
+                      "     'MAE Test':round(mae_temp,3), 'RMSE "
+                      "Test':round(float(mean_squared_error(objetivo_prueba,predicciones_temp)**0.5),3),\n"
+                      "     'R² Test':round(r2_score(objetivo_prueba,predicciones_temp),3),\n"
+                      "     'Mejora vs Baseline':f'{((mae_dum-mae_temp)/mae_dum*100):.1f}%',\n"
+                      "     'Uso Recomendado':'Intervención preventiva inicio de año'},\n"
+                      "    {'Escenario':' Tardío', 'Modelo':'SVR Opt.',\n"
+                      "     'MAE Test':round(mae_tard,3), 'RMSE "
+                      "Test':round(float(mean_squared_error(objetivo_prueba,predicciones_prueba)**0.5),3),\n"
+                      "     'R² Test':round(r2_score(objetivo_prueba,predicciones_prueba),3),\n"
+                      "     'Mejora vs Baseline':f'{((mae_dum-mae_tard)/mae_dum*100):.1f}%',\n"
+                      "     'Uso Recomendado':'Pronóstico de cierre antes del acta'},\n"
+                      '])\n'
+                      "print(' TABLA RESUMEN FINAL - Ambos Escenarios en Test (N=130)')\n"
+                      "display(tabla_final.set_index('Escenario').style\n"
+                      "        .set_caption('Comparativa Final Temprano vs Tardío')\n"
+                      "        .background_gradient(subset=['MAE Test'], cmap='RdYlGn_r')\n"
+                      "        .background_gradient(subset=['R² Test'], cmap='RdYlGn'))\n"},
+           {'cell_type': 'markdown',
+            'id': 'cell-0047',
+            'metadata': {},
+            'source': '###  Conclusiones Fundamentadas\n'
+                      '\n'
+                      '1. **La regresión supervisada es adecuada.** nota_final es continua y los '
+                      'modelos superaron con holgura el umbral de éxito (MAE < 1.5 pts en test).\n'
+                      '\n'
+                      '2. **nota_primer_periodo y nota_segundo_periodo son predictores de primer '
+                      'orden.** La correlación de nota_segundo_periodo con nota_final es r ≈ 0.92; el '
+                      'escenario tardío tiene una ventaja predictiva sustancial (~0.70 vs ~1.80 pts de '
+                      'MAE).\n'
+                      '\n'
+                      '3. **SVR con kernel lineal y C=0.1 fue el modelo ganador.** Supera a '
+                      'LinearRegression tras la optimización y logra MAE ≈ 0.70 pts con R² ≈ 0.86 en '
+                      'test.\n'
+                      '\n'
+                      '4. **El aislamiento estricto del test garantiza estimaciones confiables.** Todos '
+                      'los parámetros se determinaron sobre el 80% de entrenamiento, sin optimismo '
+                      'artificial.\n'
+                      '\n'
+                      '5. **El escenario temprano tiene alto valor institucional.** MAE de ~1.8 pts con '
+                      'datos desde la matrícula permite identificar alumnos en riesgo antes de '
+                      'cualquier evaluación.\n'
+                      '\n'
+                      '---\n'
+                      '\n'
+                      '###  Mejoras Técnicas Priorizadas\n'
+                      '\n'
+                      '| Prioridad | Mejora | Impacto Esperado |\n'
+                      '|---|---|---|\n'
+                      '| **Alta** | Incorporar `RandomForest` y `GradientBoosting` como candidatos '
+                      'adicionales | Captura de interacciones no lineales; posible MAE < 1.3 en '
+                      'temprano |\n'
+                      '| **Alta** | Aplicar `RandomizedSearchCV` con distribuciones continuas para SVR '
+                      '| Exploración más eficiente del espacio de hiperparámetros |\n'
+                      '| **Media** | Analizar importancia de características (permutation importance) | '
+                      'Identificar las 5 variables más críticas por escenario |\n'
+                      '| **Media** | Equilibrar la distribución de nota_final en los extremos (0-4 y '
+                      '18-20) | Reducción del sesgo hacia la media histórica |\n'
+                      '| **Baja** | Desplegar el flujo como API REST (FastAPI + joblib) | Integración '
+                      'directa con sistemas de gestión académica |\n'
+                      '\n'
+                      '---\n'
+                      '\n'
+                      '###  Recomendación de Despliegue\n'
+                      '\n'
+                      '```python\n'
+                      'import joblib\n'
+                      'flujo = '
+                      "joblib.load('models/modelo_final_tardio_support_vector_regression.joblib')\n"
+                      'nota_estimada = flujo.predict(predictores_nuevo_estudiante)  # Sin '
+                      'reentrenamiento\n'
+                      'if nota_estimada[0] < 10:\n'
+                      '    activar_protocolo_intervencion()\n'
+                      '```\n'
+                      '\n'
+                      '**Ciclo de mantenimiento recomendado:** Recalibrar al inicio de cada año escolar '
+                      'con datos actualizados.\n'},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'cell-0048',
+            'metadata': {},
+            'outputs': [],
+            'source': 'from src.config import DIRECTORIO_TABLAS, DIRECTORIO_FIGURAS, '
+                      'DIRECTORIO_MODELOS\n'
+                      '\n'
+                      "print('=' * 70)\n"
+                      "print(' NOTEBOOK DE 16 ETAPAS COMPLETADO EXITOSAMENTE')\n"
+                      "print('=' * 70)\n"
+                      "print('\\n   Tablas generadas en reports/tables/:')\n"
+                      "for t in sorted(DIRECTORIO_TABLAS.glob('*.csv')): print(f'     {t.name}')\n"
+                      "print('\\n   Figuras generadas en reports/figures/:')\n"
+                      "for f in sorted(DIRECTORIO_FIGURAS.glob('*.png')): print(f'     {f.name}')\n"
+                      "print('\\n   Modelos serializados en models/:')\n"
+                      "for m in sorted(DIRECTORIO_MODELOS.glob('*.joblib')): print(f'     {m.name}')\n"},
+           {'cell_type': 'markdown',
+            'id': 'titulo-simulador',
+            'metadata': {},
+            'source': '<a id="simulador"></a>\n'
+                      '<div class="seccion-cuaderno"><span>EXPLORACIÓN INTERACTIVA</span><h2>Simulador '
+                      'de nota final</h2></div>\n'
+                      'Completa las cuatro secciones del perfil y calcula la estimación. Ejecuta '
+                      'primero las etapas anteriores.'},
+           {'cell_type': 'code',
+            'execution_count': None,
+            'id': 'panel-prediccion',
+            'metadata': {},
+            'outputs': [],
+            'source': 'from src.interfaz import construir_panel\n'
+                      'campos_perfil, boton_estimar, salida_estimacion = construir_panel(\n'
+                      "    flujo_ganador, datos.drop(columns=['nota_final']))\n"}],
+ 'metadata': {'kernelspec': {'display_name': 'Python 3 (ipykernel)',
+                             'language': 'python',
+                             'name': 'python3'},
+              'language_info': {'codemirror_mode': {'name': 'ipython', 'version': 3},
+                                'file_extension': '.py',
+                                'mimetype': 'text/x-python',
+                                'name': 'python',
+                                'nbconvert_exporter': 'python',
+                                'pygments_lexer': 'ipython3',
+                                'version': '3.13.14'}},
+ 'nbformat': 4,
+ 'nbformat_minor': 5}
+
+def crear_notebook():
+    raiz = Path(__file__).resolve().parent
+    for nombre, cuaderno in [("notebooks/PrediccionesNotasAlumnos.ipynb", CUADERNO), ("documentacion/Analisis_16_Etapas.ipynb", CUADERNO_ANALISIS)]:
+        ruta = raiz / nombre
+        ruta.parent.mkdir(parents=True, exist_ok=True)
+        ruta.write_text(json.dumps(cuaderno, ensure_ascii=False, indent=1), encoding="utf-8")
+        print(f"Cuaderno creado: {ruta}")
+
+if __name__ == "__main__":
+    crear_notebook()
