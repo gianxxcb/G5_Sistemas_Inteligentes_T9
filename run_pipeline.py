@@ -2,7 +2,7 @@
 
 Ejecuta el flujo experimental de principio a fin de forma reproducible,
 respetando el aislamiento estricto del conjunto de prueba y generando las evidencias
-objetivo tablas requeridas por la guía (T1 a T9 y figuras asociadas).
+y tablas requeridas por la guía (T1 a T9 y figuras asociadas).
 """
 
 import sys

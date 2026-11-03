@@ -1,5 +1,5 @@
 ﻿Candidato,MAE CV,Interpretabilidad,Costo Inferencia,Veredicto
 LinearRegression,0.863,Alta,O(p),Finalista
-SVR Optimizado,0.801,Baja (kernel),O(n_sv*p),✅ GANADOR
+SVR Optimizado,0.801,Baja (kernel),O(n_sv*p), GANADOR
 KNN Optimizado,1.356,Media,O(n*p),Descartado
 DummyRegressor,2.421,N/A,O(1),Referencia Mínima

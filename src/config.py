@@ -42,7 +42,7 @@ METADATOS_DATOS = {
     "archivo_csv": "student-por.csv",
     "fuente_kaggle": "https://www.kaggle.com/datasets/larsen0966/student-performance-data-set",
     "autor_original": "Paulo Cortez, Alice Silva (Universidade do Minho, Portugal)",
-    "licencia": "Open Data Commons Open Database License (ODbL) / CC BY 4.0",
+    "licencia": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
     "unidad_analisis": "Un estudiante de secundaria de asignatura de Lengua Portuguesa",
 }
 

@@ -1,32 +1,65 @@
-"""Módulo para inferencia con modelos entrenados y demostración de nuevas predicciones.
-
-Genera los 5 casos hipotéticos plausibles exigidos en la Etapa 15 (Tabla T9).
-"""
-
+"""Carga del pipeline completo y predicción de estudiantes nuevos."""
 from pathlib import Path
-from typing import Dict, List, Optional
+import warnings
 import joblib
 import numpy as np
 import pandas as pd
+from sklearn.exceptions import InconsistentVersionWarning
+from sklearn.utils.validation import check_is_fitted
+from src.data import RAIZ
 
-from src.config import DIRECTORIO_MODELOS, DIRECTORIO_TABLAS
+RUTA_MODELO = RAIZ / "models" / "modelo_final.joblib"
+
+def cargar_pipeline(ruta=RUTA_MODELO):
+    ruta = Path(ruta)
+    if not ruta.is_file():
+        raise FileNotFoundError("Falta models/modelo_final.joblib. Ejecuta: python -m src.ml --entrenar")
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", InconsistentVersionWarning)
+            modelo = joblib.load(ruta)
+    except InconsistentVersionWarning as error:
+        raise RuntimeError("El modelo usa otra versión de scikit-learn. Instala requirements.txt o vuelve a entrenarlo.") from error
+    check_is_fitted(modelo)
+    if not hasattr(modelo, "feature_names_in_"):
+        raise ValueError("El artefacto no incluye los nombres de las variables del pipeline.")
+    return modelo
 
 
-def cargar_pipeline_entrenado(ruta_modelo: Optional[Path] = None) -> object:
-    """Carga el flujo entrenado y serializado desde el directorio de modelos."""
-    if ruta_modelo is None:
-        archivos = sorted(DIRECTORIO_MODELOS.glob("modelo_final_*.joblib"), key=lambda ruta: ruta.stat().st_mtime, reverse=True)
-        if not archivos:
-            raise FileNotFoundError(f"No se encontraron modelos serializados en: {DIRECTORIO_MODELOS}")
-        ruta_modelo = archivos[0]
-        
-    if not ruta_modelo.exists():
-        raise FileNotFoundError(f"Archivo de modelo no encontrado: {ruta_modelo}")
-        
-    return joblib.load(ruta_modelo)
+def predecir_observaciones(modelo, observaciones):
+    if isinstance(observaciones, dict):
+        observaciones = pd.DataFrame([observaciones])
+    elif not isinstance(observaciones, pd.DataFrame):
+        observaciones = pd.DataFrame(observaciones)
+    columnas = list(modelo.feature_names_in_)
+    faltantes = set(columnas) - set(observaciones.columns)
+    if faltantes:
+        raise ValueError("Faltan variables del perfil: " + ", ".join(sorted(faltantes)))
+    if observaciones.empty:
+        raise ValueError("No se recibieron observaciones para predecir.")
+    predicciones = np.asarray(modelo.predict(observaciones[columnas]), dtype=float)
+    if not np.isfinite(predicciones).all():
+        raise ValueError("El modelo devolvió una predicción no válida.")
+    return predicciones
 
 
-def generar_cinco_casos_nuevos(escenario: str = "tardio") -> pd.DataFrame:
+def predecir_perfil(modelo, perfil):
+    return float(predecir_observaciones(modelo, perfil)[0])
+
+
+def describir_resultado(nota):
+    if not np.isfinite(nota):
+        raise ValueError("La nota debe ser un número finito.")
+    return {
+        "nota": float(nota),
+        "estado": "Aprobación proyectada" if nota >= 10 else "Requiere apoyo académico",
+        "recomendacion": "Mantener el acompañamiento y los hábitos de estudio." if nota >= 10 else
+                         "Revisar las dificultades y planificar apoyo educativo.",
+        "fuera_de_escala": not 0 <= nota <= 20,
+    }
+
+
+def generar_casos_ejemplo(escenario: str = "tardio") -> pd.DataFrame:
     """Construye 5 perfiles plausibles y representativos de estudiantes hipotéticos."""
     casos = [
         {
@@ -94,6 +127,14 @@ def generar_cinco_casos_nuevos(escenario: str = "tardio") -> pd.DataFrame:
     return datos_casos
 
 
+from src.config import DIRECTORIO_TABLAS
+
+def cargar_pipeline_entrenado(ruta_modelo=None):
+    return cargar_pipeline(RUTA_MODELO if ruta_modelo is None else ruta_modelo)
+
+def generar_cinco_casos_nuevos(escenario="tardio"):
+    return generar_casos_ejemplo(escenario)
+
 def realizar_predicciones_nuevas(
     flujo: object,
     escenario: str = "tardio",
@@ -106,7 +147,7 @@ def realizar_predicciones_nuevas(
     predictores_nuevos = datos_casos.drop(columns=columnas_descriptivas).copy()
     
     # Predicción sin reentrenamiento
-    predicciones = flujo.predict(predictores_nuevos)
+    predicciones = predecir_observaciones(flujo, predictores_nuevos)
     
     filas_t9 = []
     for i, fila in datos_casos.iterrows():

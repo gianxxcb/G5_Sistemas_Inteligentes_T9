@@ -1,5 +1,5 @@
 ﻿Escenario,Modelo,Fold 1 (MAE),Fold 2 (MAE),Fold 3 (MAE),Fold 4 (MAE),Fold 5 (MAE),MAE Medio,MAE Desv.,RMSE Medio,R2 Medio,Tiempo Medio (s),Ranking MAE
-Temprano,regresion_vectores_soporte,1.864,1.576,2.208,1.968,1.991,1.921,0.206,2.704,0.3,0.0492,1
-Temprano,regresion_lineal,1.923,1.771,2.12,2.07,1.99,1.975,0.122,2.709,0.295,0.1145,2
-Temprano,vecinos_cercanos,2.238,1.777,2.492,2.081,2.054,2.129,0.235,2.905,0.191,0.064,3
-Temprano,referencia_media,2.29,2.105,2.763,2.391,2.555,2.421,0.225,3.235,-0.003,0.1117,4
+Temprano,regresion_vectores_soporte,1.864,1.576,2.208,1.968,1.991,1.921,0.206,2.704,0.3,0.0529,1
+Temprano,regresion_lineal,1.923,1.771,2.12,2.07,1.99,1.975,0.122,2.709,0.295,0.0786,2
+Temprano,vecinos_cercanos,2.238,1.777,2.492,2.081,2.054,2.129,0.235,2.905,0.191,0.0486,3
+Temprano,referencia_media,2.29,2.105,2.763,2.391,2.555,2.421,0.225,3.235,-0.003,0.0744,4

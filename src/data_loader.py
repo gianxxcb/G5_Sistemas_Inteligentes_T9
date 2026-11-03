@@ -33,27 +33,13 @@ def calcular_sha256(ruta_archivo: Path) -> str:
 
 
 def cargar_datos(ruta_csv: Path = RUTA_DATOS_ORIGINALES) -> pd.DataFrame:
-    """Carga el dataset CSV y valida su integridad y estructura mínima requerida."""
-    if not ruta_csv.exists():
-        raise FileNotFoundError(f"Archivo de datos no encontrado en: {ruta_csv}")
-    
-    from src.config import COLUMNAS_EN_ESPANOL
-    datos = pd.read_csv(ruta_csv).rename(columns=COLUMNAS_EN_ESPANOL)
-    
-    # Validaciones estructurales
-    columnas_requeridas = {COLUMNA_OBJETIVO, *NOTAS_PREVIAS}
-    faltantes = columnas_requeridas - set(datos.columns)
-    if faltantes:
-        raise ValueError(f"El dataset carece de las columnas obligatorias: {sorted(faltantes)}")
-    
-    if datos.empty:
-        raise ValueError("El archivo CSV cargado no contiene registros.")
-        
-    return datos
+    """Carga y valida el CSV con el mismo lector que utiliza Streamlit."""
+    from src.data import cargar_datos as cargar_datos_verificados
+    return cargar_datos_verificados(ruta_csv)
 
 
 def construir_escenarios(datos: pd.DataFrame) -> Dict[str, Tuple[pd.DataFrame, pd.Series]]:
-    """Construye las matrices de características predictores y el vector objetivo objetivo para dos momentos.
+    """Construye las matrices de características predictores y el vector objetivo para dos momentos.
     
     - Escenario Temprano: alerta previa al inicio de evaluaciones (excluye nota_primer_periodo, nota_segundo_periodo y nota_final).
     - Escenario Tardío: evaluación antes del cierre definitivo (incluye nota_primer_periodo y nota_segundo_periodo, excluye nota_final).
@@ -81,8 +67,8 @@ def clasificar_columnas(predictores: pd.DataFrame) -> Tuple[List[str], List[str]
 
 def realizar_particion_datos(
     datos: pd.DataFrame,
-    test_size: float = PROPORCION_PRUEBA,
-    random_state: int = SEMILLA_ALEATORIA,
+    proporcion_prueba: float = PROPORCION_PRUEBA,
+    semilla: int = SEMILLA_ALEATORIA,
     guardar_indices: bool = True,
 ) -> Tuple[List[int], List[int]]:
     """Realiza una división común y reproducible de índices para ambos escenarios (80/20).
@@ -93,7 +79,7 @@ def realizar_particion_datos(
     indices = list(range(total_filas))
     
     indices_entrenamiento, indices_prueba = train_test_split(
-        indices, test_size=test_size, random_state=random_state, shuffle=True
+        indices, test_size=proporcion_prueba, random_state=semilla, shuffle=True
     )
     indices_entrenamiento = sorted(indices_entrenamiento)
     indices_prueba = sorted(indices_prueba)

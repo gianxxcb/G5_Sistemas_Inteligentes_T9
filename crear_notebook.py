@@ -1,64 +1,8 @@
-"""Regenera la entrada única de NotaClara y su documentación académica."""
+"""Genera el cuaderno académico de 16 etapas con variables en español."""
 import json
 from pathlib import Path
 
 CUADERNO = {'cells': [{'cell_type': 'markdown',
-            'id': 'inicio-simulador',
-            'metadata': {},
-            'source': 'Selecciona **Run > Run All Cells** para abrir **NotaClara**. Utiliza el modelo '
-                      'ya entrenado para estimar la nota final.'},
-           {'cell_type': 'code',
-            'execution_count': None,
-            'id': 'interfaz-simulador',
-            'metadata': {},
-            'outputs': [],
-            'source': 'import sys\n'
-                      'from pathlib import Path\n'
-                      'import importlib\n'
-                      '\n'
-                      'ubicacion = Path().resolve()\n'
-                      'RAIZ = next((carpeta for carpeta in [ubicacion, *ubicacion.parents, ubicacion / '
-                      "'Trabajo_II_Unidad']\n"
-                      "             if (carpeta / 'src' / 'config.py').exists()), None)\n"
-                      'if RAIZ is None:\n'
-                      "    raise FileNotFoundError('Abre este cuaderno desde la carpeta del "
-                      "proyecto.')\n"
-                      'if str(RAIZ) not in sys.path:\n'
-                      '    sys.path.insert(0, str(RAIZ))\n'
-                      '\n'
-                      'from src.data_loader import cargar_datos\n'
-                      'from src.predict import cargar_pipeline_entrenado\n'
-                      'import src.interfaz as interfaz\n'
-                      'importlib.reload(interfaz)\n'
-                      '\n'
-                      'datos = cargar_datos()\n'
-                      'modelo = cargar_pipeline_entrenado()\n'
-                      "predictores = datos.drop(columns=['nota_final'])\n"
-                      'if set(modelo.feature_names_in_) != set(predictores.columns):\n'
-                      "    raise ValueError('Primero ejecuta documentacion/Analisis_16_Etapas.ipynb "
-                      "para generar el modelo con variables en español.')\n"
-                      'campos_perfil, boton_estimar, salida_estimacion = '
-                      'interfaz.construir_panel(modelo, predictores)\n'},
-           {'cell_type': 'code',
-            'execution_count': None,
-            'id': '35274265-daba-442a-96fd-87ea8dc33b24',
-            'metadata': {},
-            'outputs': [],
-            'source': ''}],
- 'metadata': {'kernelspec': {'display_name': 'Python 3 (ipykernel)',
-                             'language': 'python',
-                             'name': 'python3'},
-              'language_info': {'codemirror_mode': {'name': 'ipython', 'version': 3},
-                                'file_extension': '.py',
-                                'mimetype': 'text/x-python',
-                                'name': 'python',
-                                'nbconvert_exporter': 'python',
-                                'pygments_lexer': 'ipython3',
-                                'version': '3.13.14'}},
- 'nbformat': 4,
- 'nbformat_minor': 5}
-
-CUADERNO_ANALISIS = {'cells': [{'cell_type': 'markdown',
             'id': 'cell-0001',
             'metadata': {},
             'source': '<div class="panel-academico portada-academica"><div class="etiqueta">Grupo 06 / '
@@ -74,7 +18,7 @@ CUADERNO_ANALISIS = {'cells': [{'cell_type': 'markdown',
                       '\n'
                       '[Conjunto de datos](#etapa-3) &nbsp; / &nbsp; [Exploración](#etapa-6) &nbsp; / '
                       '&nbsp; [Modelos](#etapa-8) &nbsp; / &nbsp; [Evaluación](#etapa-13) &nbsp; / '
-                      '&nbsp; [Simulador](#simulador)\n'
+                      '&nbsp; Interfaz: ejecuta streamlit run app.py\n'
                       '\n'
                       'Las columnas se traducen al cargarse. Los archivos originales de datos se '
                       'conservan intactos.\n'},
@@ -100,7 +44,6 @@ CUADERNO_ANALISIS = {'cells': [{'cell_type': 'markdown',
                       '    sys.path.insert(0, str(RAIZ))\n'
                       '\n'
                       'import warnings\n'
-                      "warnings.filterwarnings('ignore')\n"
                       '\n'
                       'import numpy as np\n'
                       'import pandas as pd\n'
@@ -114,8 +57,7 @@ CUADERNO_ANALISIS = {'cells': [{'cell_type': 'markdown',
                       "print(f'   Raíz del proyecto: {RAIZ}')\n"
                       '\n'
                       'from IPython.display import display\n'
-                      'from src.interfaz import configurar_estilo\n'
-                      'configurar_estilo()\n'},
+                      '\n'},
            {'cell_type': 'markdown',
             'id': 'cell-0004',
             'metadata': {},
@@ -231,8 +173,7 @@ CUADERNO_ANALISIS = {'cells': [{'cell_type': 'markdown',
                       "print(f'\\n  Dimensiones: {datos.shape[0]} registros x {datos.shape[1]} "
                       "columnas')\n"
                       '\n'
-                      'from src.interfaz import mostrar_resumen\n'
-                      'mostrar_resumen(datos)\n'},
+                      '\n'},
            {'cell_type': 'code',
             'execution_count': None,
             'id': 'cell-0008',
@@ -445,7 +386,7 @@ CUADERNO_ANALISIS = {'cells': [{'cell_type': 'markdown',
             'outputs': [],
             'source': 'from sklearn.model_selection import KFold\n'
                       '\n'
-                      'kf = KFold(n_splits=5, shuffle=True, random_state=42)\n'
+                      'particiones_cv = KFold(n_splits=5, shuffle=True, random_state=42)\n'
                       "print(' CONFIGURACIÓN DE ENTRENAMIENTO REPRODUCIBLE')\n"
                       "print('=' * 55)\n"
                       "print(f'  Algoritmo de partición : KFold')\n"
@@ -878,16 +819,18 @@ CUADERNO_ANALISIS = {'cells': [{'cell_type': 'markdown',
                       'from src.config import REJILLA_SVR\n'
                       '\n'
                       '# Evaluar mejor SVR en escenario temprano\n'
-                      'kf5 = KFold(n_splits=5, shuffle=True, random_state=42)\n'
-                      'pipe_svr_temp = Pipeline([\n'
+                      'particiones_cv_5 = KFold(n_splits=5, shuffle=True, random_state=42)\n'
+                      'flujo_svr_temprano = Pipeline([\n'
                       "    ('preprocesamiento', crear_preprocesador(cols_num_temp, cols_cat_temp)),\n"
                       "    ('modelo', SVR()),\n"
                       '])\n'
-                      'grid_temp = GridSearchCV(pipe_svr_temp, REJILLA_SVR, cv=kf5,\n'
+                      'busqueda_temprano = GridSearchCV(flujo_svr_temprano, REJILLA_SVR, '
+                      'cv=particiones_cv_5,\n'
                       "                         scoring='neg_mean_absolute_error', n_jobs=-1)\n"
-                      'grid_temp.fit(predictores_entrenamiento_temprano, objetivo_entrenamiento)\n'
+                      'busqueda_temprano.fit(predictores_entrenamiento_temprano, '
+                      'objetivo_entrenamiento)\n'
                       'predicciones_temp = '
-                      'grid_temp.best_estimator_.predict(predictores_prueba_temprano)\n'
+                      'busqueda_temprano.best_estimator_.predict(predictores_prueba_temprano)\n'
                       '\n'
                       'mae_tard = mean_absolute_error(objetivo_prueba, predicciones_prueba)\n'
                       'mae_temp = mean_absolute_error(objetivo_prueba, predicciones_temp)\n'
@@ -988,23 +931,8 @@ CUADERNO_ANALISIS = {'cells': [{'cell_type': 'markdown',
                       "print('\\n   Figuras generadas en reports/figures/:')\n"
                       "for f in sorted(DIRECTORIO_FIGURAS.glob('*.png')): print(f'     {f.name}')\n"
                       "print('\\n   Modelos serializados en models/:')\n"
-                      "for m in sorted(DIRECTORIO_MODELOS.glob('*.joblib')): print(f'     {m.name}')\n"},
-           {'cell_type': 'markdown',
-            'id': 'titulo-simulador',
-            'metadata': {},
-            'source': '<a id="simulador"></a>\n'
-                      '<div class="seccion-cuaderno"><span>EXPLORACIÓN INTERACTIVA</span><h2>Simulador '
-                      'de nota final</h2></div>\n'
-                      'Completa las cuatro secciones del perfil y calcula la estimación. Ejecuta '
-                      'primero las etapas anteriores.'},
-           {'cell_type': 'code',
-            'execution_count': None,
-            'id': 'panel-prediccion',
-            'metadata': {},
-            'outputs': [],
-            'source': 'from src.interfaz import construir_panel\n'
-                      'campos_perfil, boton_estimar, salida_estimacion = construir_panel(\n'
-                      "    flujo_ganador, datos.drop(columns=['nota_final']))\n"}],
+                      "for m in sorted(DIRECTORIO_MODELOS.glob('*.joblib')): print(f'     "
+                      "{m.name}')\n"}],
  'metadata': {'kernelspec': {'display_name': 'Python 3 (ipykernel)',
                              'language': 'python',
                              'name': 'python3'},
@@ -1019,12 +947,10 @@ CUADERNO_ANALISIS = {'cells': [{'cell_type': 'markdown',
  'nbformat_minor': 5}
 
 def crear_notebook():
-    raiz = Path(__file__).resolve().parent
-    for nombre, cuaderno in [("notebooks/PrediccionesNotasAlumnos.ipynb", CUADERNO), ("documentacion/Analisis_16_Etapas.ipynb", CUADERNO_ANALISIS)]:
-        ruta = raiz / nombre
-        ruta.parent.mkdir(parents=True, exist_ok=True)
-        ruta.write_text(json.dumps(cuaderno, ensure_ascii=False, indent=1), encoding="utf-8")
-        print(f"Cuaderno creado: {ruta}")
+    ruta = Path(__file__).resolve().parent / "notebooks" / "Estimacion_Nota_Final_16_Etapas.ipynb"
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    ruta.write_text(json.dumps(CUADERNO, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"Cuaderno creado: {ruta}")
 
 if __name__ == "__main__":
     crear_notebook()

@@ -31,15 +31,15 @@ def evaluar_validacion_cruzada(
     flujos: Dict[str, Pipeline],
     predictores_entrenamiento: pd.DataFrame,
     objetivo_entrenamiento: pd.Series,
-    n_splits: int = NUMERO_PLIEGUES_CV,
-    random_state: int = SEMILLA_ALEATORIA,
+    numero_pliegues: int = NUMERO_PLIEGUES_CV,
+    semilla: int = SEMILLA_ALEATORIA,
     nombre_escenario: str = "temprano",
 ) -> Tuple[pd.DataFrame, Dict[str, Dict[str, np.ndarray]]]:
     """Ejecuta 5-Fold Cross Validation sobre predictores_entrenamiento calculando MAE, RMSE y R².
     
     Genera la Tabla T5 oficial con resultados por pliegue, media y desviación típica.
     """
-    kf = KFold(n_splits=n_splits, shuffle=True, random_state=random_state)
+    particiones_cv = KFold(n_splits=numero_pliegues, shuffle=True, random_state=semilla)
     
     metricas = {
         "mae": "neg_mean_absolute_error",
@@ -55,7 +55,7 @@ def evaluar_validacion_cruzada(
             flujo,
             predictores_entrenamiento,
             objetivo_entrenamiento,
-            cv=kf,
+            cv=particiones_cv,
             scoring=metricas,
             return_train_score=False,
             n_jobs=-1,
@@ -100,15 +100,15 @@ def optimizar_hiperparametros(
     flujos: Dict[str, Pipeline],
     predictores_entrenamiento: pd.DataFrame,
     objetivo_entrenamiento: pd.Series,
-    n_splits: int = NUMERO_PLIEGUES_CV,
-    random_state: int = SEMILLA_ALEATORIA,
+    numero_pliegues: int = NUMERO_PLIEGUES_CV,
+    semilla: int = SEMILLA_ALEATORIA,
     nombre_escenario: str = "temprano",
 ) -> Tuple[pd.DataFrame, Dict[str, GridSearchCV]]:
     """Ejecuta GridSearchCV exclusivamente dentro de los folds de train para KNN y SVR.
     
     Genera la Tabla T6 con comparativa antes y después de la optimización.
     """
-    kf = KFold(n_splits=n_splits, shuffle=True, random_state=random_state)
+    particiones_cv = KFold(n_splits=numero_pliegues, shuffle=True, random_state=semilla)
     
     rejillas = {
         "vecinos_cercanos": REJILLA_KNN,
@@ -123,7 +123,7 @@ def optimizar_hiperparametros(
         
         # Rendimiento antes del GridSearch (por defecto)
         cv_defecto = cross_validate(
-            flujo_base, predictores_entrenamiento, objetivo_entrenamiento, cv=kf, scoring="neg_mean_absolute_error", n_jobs=-1
+            flujo_base, predictores_entrenamiento, objetivo_entrenamiento, cv=particiones_cv, scoring="neg_mean_absolute_error", n_jobs=-1
         )
         mae_previo = -np.mean(cv_defecto["test_score"])
         
@@ -131,7 +131,7 @@ def optimizar_hiperparametros(
         busqueda = GridSearchCV(
             estimator=flujo_base,
             param_grid=rejilla,
-            cv=kf,
+            cv=particiones_cv,
             scoring="neg_mean_absolute_error",
             n_jobs=-1,
             refit=True,
@@ -203,6 +203,17 @@ def evaluar_test_final(
     DIRECTORIO_MODELOS.mkdir(parents=True, exist_ok=True)
     ruta_modelo = DIRECTORIO_MODELOS / f"modelo_final_{nombre_escenario}_{nombre_modelo}.joblib"
     joblib.dump(flujo_ganador, ruta_modelo)
+    if nombre_escenario == "tardio":
+        from src.ml import guardar_modelo
+        informe = {
+            "modelo": nombre_modelo, "escenario": nombre_escenario,
+            "prueba": {"MAE": float(mae_prueba), "RMSE": float(rmse_prueba), "R2": float(r2_prueba)},
+            "indices_entrenamiento": [int(indice) for indice in predictores_entrenamiento.index],
+            "indices_prueba": [int(indice) for indice in predictores_prueba.index],
+        }
+        flujo_ganador.notaclara_metadatos_ = informe
+        guardar_modelo(flujo_ganador, informe)
+
     
     # 1. Tabla T8: Resumen de Evaluación Final
     t8_filas = [
